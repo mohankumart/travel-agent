@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Memory Travel Agent",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/travel/memoryTravelAgent.js",
+            "runtimeArgs": ["--experimental-specifier-resolution=node"],
+            "env": {
+                "NODE_OPTIONS": "--experimental-vm-modules"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        }
+        ,{
+            "name": "Eval",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/travel/eval.js",
+            "runtimeArgs": ["--experimental-specifier-resolution=node"],
+            "env": {
+                "NODE_OPTIONS": "--experimental-vm-modules"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        }
+    ]
+}
