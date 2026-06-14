@@ -1,5 +1,8 @@
+import { DEFAULT_MODEL } from "./constants.js";
+
 // Reusable agentic loop — call the model, execute tools, repeat until final answer
-export async function runAgent({ ai, model = "gemini-2.5-flash", systemInstruction, tools, toolDeclarations, messages, maxIterations = 10, onToolCall }) {
+export async function runAgent({ ai, model = DEFAULT_MODEL, systemInstruction, tools, toolDeclarations, messages, maxIterations = 10, onToolCall, thinkingBudget = 1000 }) {
+    const history = [...messages];
     let iteration = 1;
 
     while (iteration <= maxIterations) {
@@ -7,12 +10,12 @@ export async function runAgent({ ai, model = "gemini-2.5-flash", systemInstructi
 
         const response = await ai.models.generateContent({
             model,
-            contents: messages,
+            contents: history,
             config: {
                 systemInstruction,
                 thinkingConfig: {
-                    includeThoughts: true,
-                    thinkingBudget: 8000,
+                    includeThoughts: thinkingBudget > 0,
+                    thinkingBudget,
                 },
                 tools: [{ functionDeclarations: toolDeclarations }]
             }
@@ -32,20 +35,20 @@ export async function runAgent({ ai, model = "gemini-2.5-flash", systemInstructi
         }
 
         // Add the model's turn to history before processing tool calls
-        messages.push({
+        history.push({
             role: "model",
             parts: response.candidates[0].content.parts
         });
 
         const functionCalls = response.functionCalls ?? [];
 
-        console.log("\n Model Response:");
-        console.log(JSON.stringify(response.functionCalls, null, 2));
-
         // No function calls means the model has enough info to give a final answer
         if (functionCalls.length === 0) {
             return response.text;
         }
+
+        console.log("\n Model Response:");
+        console.log(JSON.stringify(functionCalls, null, 2));
 
         console.log("\nExecuting Tools...");
 
@@ -69,7 +72,7 @@ export async function runAgent({ ai, model = "gemini-2.5-flash", systemInstructi
         }
 
         // Return tool results to the model as a user turn
-        messages.push({
+        history.push({
             role: "user",
             parts: toolResponses.map(({ call, result }) => ({
                 functionResponse: {
